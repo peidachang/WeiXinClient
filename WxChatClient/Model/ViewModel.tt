@@ -1,0 +1,115 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="System.Xml.Linq" #>
+<#@ output extension=".cs" #>
+<#
+	var filename = "ViewModel.xml";
+	var net45 = false;
+
+	var filepath = Host.ResolvePath(filename);	
+	var xml = XElement.Load(filepath);
+	
+	var _namespace = xml.Attribute("namespace").Value;
+	var _usings = (
+				   from p in xml.Elements("using")
+				   orderby p.Value ascending
+				   select p.Value
+				  );
+    var _classes = (
+					from p in xml.Elements("class")
+					select p
+				   );
+#>
+namespace <#=_namespace #>
+{
+	using System;
+	using System.ComponentModel;
+<#
+	if(net45)
+	{
+#>
+	using System.Runtime.CompilerServices;
+<#
+	}
+#>
+<#
+    foreach(var s in _usings)
+	{
+#>
+	using <#=s #>;
+<#
+	}
+#>
+<#
+	foreach(var _class in _classes)
+	{
+		var className = _class.Attribute("name").Value;
+		var propertys = (
+						 from p in _class.Elements("property")
+						 select p
+						);
+#>
+
+	public partial class <#=className #> : INotifyPropertyChanged
+	{
+		public event PropertyChangedEventHandler PropertyChanged;
+<#
+		if(net45)
+		{
+#>
+        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+<#
+		}
+#>
+<#
+		foreach(var prop in propertys)
+		{
+			var propType = prop.Attribute("type").Value;
+			var propName = prop.Value;
+#>
+
+		private <#=propType #> _<#=propName#>;
+		public <#=propType #> <#=propName#>
+		{
+			get { return _<#=propName#>; }
+			set 
+			{				
+				_<#=propName#> = value;
+<#
+			if(!net45)
+			{
+#>
+				if(PropertyChanged != null)
+					PropertyChanged(this, new PropertyChangedEventArgs("<#=propName #>"));
+<#
+			}
+			else
+			{
+#>
+				NotifyPropertyChanged();
+<#
+			}
+#>
+			}
+		}
+<#
+		}
+#>
+	}
+<#		
+	}
+#>
+
+}

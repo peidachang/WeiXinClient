@@ -1,0 +1,11 @@
+﻿<root namespace="WxChatClient">
+  <using>System.Xml</using>
+
+  <class name="LoginModel">
+    <property type="string">Account</property>
+    <property type="string">Password</property>
+  </class>
+
+  <class name="MainWindowModel">
+  </class>
+</root>
